@@ -2076,7 +2076,7 @@
     "@sendgrid/mail" "7.7.0"
     "@strapi/utils" "4.25.5"
 
-"@strapi/provider-email-sendmail@4.25.5", "@strapi/provider-email-sendmail@^4.25.5":
+"@strapi/provider-email-sendmail@4.25.5":
   version "4.25.5"
   resolved "https://registry.yarnpkg.com/@strapi/provider-email-sendmail/-/provider-email-sendmail-4.25.5.tgz#4042a4019f0d28803958053654ac3fe5348a582e"
   integrity sha512-L7dyqc9ivyatimeWAW89jvpMe9hSNjJehzjgQxXCmno0HO6oubI8zSEdkY5vdaR+W7svtF9KJuPj108+oOpglA==
