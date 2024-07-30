@@ -4,6 +4,9 @@ const stripe = require("stripe")(
   "sk_test_51NhixSIgvc5fsPdo1i2DrgQnJVJaIQRYCwuRGvk2vKhnM3HU8w1tKoeu5X22be6fJlfZBbDq3OglT8wPYgZ8Ri8e00RPSDd0OQ"
 );
 
+const fs = require("fs");
+const path = require("path");
+
 const { createCoreController } = require("@strapi/strapi").factories;
 
 module.exports = createCoreController("api::order.order", ({ strapi }) => ({
@@ -23,9 +26,63 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
       return result.toFixed(2);
     }
 
-    // Calcular el total del pago
+    // Calcular el total del pago y construir el cuerpo del correo para el usuario
     let totalPayment = 0;
-    let emailBodyUser = `<p>¡Gracias por tu compra!</p><p>Detalles de la compra:</p><ul>`;
+    let emailBodyUser = `<html>
+      <head>
+        <style>
+          /* Estilos CSS para el correo electrónico */
+          .order {
+            background-color: #f3f3f3;
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+          }
+
+          .product {
+            display: flex;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+          }
+
+          .product img {
+            width: 100px;
+            margin-right: 15px;
+            border-radius: 8px;
+          }
+
+          .product-details {
+            flex: 1;
+          }
+
+          .product-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+
+          .product-info {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+          }
+
+          .product-price {
+            font-weight: bold;
+          }
+
+          .total {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <p>¡Gracias por tu compra!</p>
+        <p>Detalles de la compra:</p>
+        <ul>`;
 
     products.forEach((product) => {
       const priceTemp = calcDiscountPrice(
@@ -36,12 +93,25 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
       const totalPrice = Number(priceTemp) * product.quantity;
       totalPayment += totalPrice;
 
-      emailBodyUser += `<li>${product.attributes.title} - ${
+      emailBodyUser += `<li class="product">
+        <h1"${product.attributes.title}">
+        <div class="product-details">
+          <p class="product-title">${product.attributes.title}</p>
+          <p class="product-info">${
+            product.attributes.category.data.attributes.title
+          }</p>
+          <p class="product-info">Cantidad: ${product.quantity}</p>
+          <p class="product-price">${priceTemp}€ x ${
         product.quantity
-      } x ${priceTemp}€ = ${totalPrice.toFixed(2)}€</li>`;
+      } = ${totalPrice.toFixed(2)}€</p>
+        </div>
+      </li>`;
     });
 
-    emailBodyUser += `</ul><p>Total pagado: ${totalPayment.toFixed(2)}€</p>`;
+    emailBodyUser += `</ul>
+      <p class="total">Total pagado: ${totalPayment.toFixed(2)}€</p>
+      </body>
+    </html>`;
 
     // Enviar correo electrónico de confirmación al usuario
     try {
@@ -60,8 +130,64 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
     }
 
     // Construir el cuerpo del correo electrónico para el administrador
-    let emailBodyAdmin = `<p>Nueva compra realizada por:</p><p>Nombre: ${name}</p><p>Usuario: ${username}</p><p>Email: ${userEmail}</p>`;
-    emailBodyAdmin += `<p>Detalles de la compra:</p><ul>`;
+    let emailBodyAdmin = `<html>
+      <head>
+        <style>
+          /* Estilos CSS para el correo electrónico */
+          .order {
+            background-color: #f3f3f3;
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+          }
+
+          .product {
+            display: flex;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+          }
+
+          .product img {
+            width: 100px;
+            margin-right: 15px;
+            border-radius: 8px;
+          }
+
+          .product-details {
+            flex: 1;
+          }
+
+          .product-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+
+          .product-info {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+          }
+
+          .product-price {
+            font-weight: bold;
+          }
+
+          .total {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <p>Nueva compra realizada por:</p>
+        <p>Nombre: ${name}</p>
+        <p>Usuario: ${username}</p>
+        <p>Email: ${userEmail}</p>
+        <p>Detalles de la compra:</p>
+        <ul>`;
 
     products.forEach((product) => {
       const priceTemp = calcDiscountPrice(
@@ -71,13 +197,30 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
 
       const totalPrice = Number(priceTemp) * product.quantity;
 
-      emailBodyAdmin += `<li>${product.attributes.title} - ${
+      emailBodyAdmin += `<li class="product">
+        <h1"${product.attributes.title}">
+        <div class="product-details">
+          <p class="product-title">${product.attributes.title}</p>
+          <p class="product-info">${
+            product.attributes.category.data.attributes.title
+          }</p>
+          <p class="product-info">Cantidad: ${product.quantity}</p>
+          <p class="product-price">${priceTemp}€ x ${
         product.quantity
-      } x ${priceTemp}€ = ${totalPrice.toFixed(2)}€</li>`;
+      } = ${totalPrice.toFixed(2)}€</p>
+        </div>
+      </li>`;
     });
 
-    emailBodyAdmin += `</ul><p>Total pagado: ${totalPayment.toFixed(2)}€</p>`;
-    emailBodyAdmin += `<p>Dirección: ${addressShipping.attributes.address} ${addressShipping.attributes.state} ${addressShipping.attributes.city} ${addressShipping.attributes.postal_code} ${addressShipping.attributes.title}</p>`;
+    emailBodyAdmin += `</ul>
+      <p class="total">Total pagado: ${totalPayment.toFixed(2)}€</p>
+      <p>Dirección: ${addressShipping.attributes.address} ${
+      addressShipping.attributes.state
+    } ${addressShipping.attributes.city} ${
+      addressShipping.attributes.postal_code
+    }</p>
+      </body>
+    </html>`;
 
     // Enviar correo electrónico al administrador
     try {
