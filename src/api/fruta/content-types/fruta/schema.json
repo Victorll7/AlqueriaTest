@@ -1,6 +1,6 @@
 {
   "kind": "collectionType",
-  "collectionName": "frutas",
+  "collectionName": "fruta",
   "info": {
     "singularName": "fruta",
     "pluralName": "frutas",
@@ -37,33 +37,22 @@
       "type": "media",
       "multiple": false,
       "required": true,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "wallpaper": {
       "type": "media",
       "multiple": false,
       "required": true,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "unidad": {
       "type": "enumeration",
-      "enum": [
-        "Kg",
-        "Bandeja",
-        "Unidad"
-      ],
+      "enum": ["Kg", "Bandeja", "Unidad"],
       "required": true
     },
     "Temporada": {
       "type": "enumeration",
-      "enum": [
-        "Sí",
-        "No"
-      ]
+      "enum": ["Sí", "No"]
     }
   }
 }
