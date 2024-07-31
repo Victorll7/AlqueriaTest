@@ -4,13 +4,12 @@ const stripe = require("stripe")(
   "sk_test_51NhixSIgvc5fsPdo1i2DrgQnJVJaIQRYCwuRGvk2vKhnM3HU8w1tKoeu5X22be6fJlfZBbDq3OglT8wPYgZ8Ri8e00RPSDd0OQ"
 );
 
-import fs from "fs";
-import path from "path";
+const fs = require("fs");
+const path = require("path");
 
-import { factories } from "@strapi/strapi";
-const { createCoreController } = factories;
+const { createCoreController } = require("@strapi/strapi").factories;
 
-export default createCoreController("api::order.order", ({ strapi }) => ({
+module.exports = createCoreController("api::order.order", ({ strapi }) => ({
   async paymentOrder(ctx) {
     const { token, products, addressShipping } = ctx.request.body;
     const { id: idUser, email: userEmail, username, name } = ctx.state.user; // Obtener datos del usuario logeado
