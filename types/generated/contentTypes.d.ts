@@ -863,7 +863,7 @@ export interface ApiCategoryCategory extends Schema.CollectionType {
 }
 
 export interface ApiFrutaFruta extends Schema.CollectionType {
-  collectionName: "fruta";
+  collectionName: "frutas";
   info: {
     singularName: "fruta";
     pluralName: "frutas";

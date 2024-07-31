@@ -1,6 +1,6 @@
 {
   "kind": "collectionType",
-  "collectionName": "fruta",
+  "collectionName": "frutas",
   "info": {
     "singularName": "fruta",
     "pluralName": "frutas",
