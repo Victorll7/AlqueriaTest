@@ -4,85 +4,27 @@ const stripe = require("stripe")(
   "sk_test_51NhixSIgvc5fsPdo1i2DrgQnJVJaIQRYCwuRGvk2vKhnM3HU8w1tKoeu5X22be6fJlfZBbDq3OglT8wPYgZ8Ri8e00RPSDd0OQ"
 );
 
-const fs = require("fs");
-const path = require("path");
+function calcDiscountPrice(price, discount) {
+  if (!discount) return price;
+
+  const discountAmount = (price * discount) / 100;
+  const result = price - discountAmount;
+
+  return result.toFixed(2);
+}
+
+/**
+ * order controller
+ */
 
 const { createCoreController } = require("@strapi/strapi").factories;
 
 module.exports = createCoreController("api::order.order", ({ strapi }) => ({
   async paymentOrder(ctx) {
-    const { token, products, addressShipping } = ctx.request.body;
-    const { id: idUser, email: userEmail, username, name } = ctx.state.user; // Obtener datos del usuario logeado
+    const { token, products, idUser, addressShipping } = ctx.request.body;
 
-    console.log("Address shipping:", addressShipping);
-
-    // Función para calcular el precio con descuento
-    function calcDiscountPrice(price, discount) {
-      if (!discount) return price;
-
-      const discountAmount = (price * discount) / 100;
-      const result = price - discountAmount;
-
-      return result.toFixed(2);
-    }
-
-    // Calcular el total del pago y construir el cuerpo del correo para el usuario
     let totalPayment = 0;
-    let emailBodyUser = `<html>
-      <head>
-        <style>
-          /* Estilos CSS para el correo electrónico */
-          .order {
-            background-color: #f3f3f3;
-            width: 100%;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-          }
-
-          .product {
-            display: flex;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ddd;
-          }
-
-          .product img {
-            width: 100px;
-            margin-right: 15px;
-            border-radius: 8px;
-          }
-
-          .product-details {
-            flex: 1;
-          }
-
-          .product-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-          }
-
-          .product-info {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
-          }
-
-          .product-price {
-            font-weight: bold;
-          }
-
-          .total {
-            text-align: right;
-            font-weight: bold;
-            margin-top: 20px;
-          }
-        </style>
-      </head>
-      <body>
-        <p>¡Gracias por tu compra!</p>
-        <p>Detalles de la compra:</p>
-        <ul>`;
+    let emailBodyUser = `<p>¡Gracias por tu compra!</p><p>Detalles de la compra:</p><ul>`;
 
     products.forEach((product) => {
       const priceTemp = calcDiscountPrice(
@@ -93,32 +35,19 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
       const totalPrice = Number(priceTemp) * product.quantity;
       totalPayment += totalPrice;
 
-      emailBodyUser += `<li class="product">
-        <h1"${product.attributes.title}">
-        <div class="product-details">
-          <p class="product-title">${product.attributes.title}</p>
-          <p class="product-info">${
-            product.attributes.category.data.attributes.title
-          }</p>
-          <p class="product-info">Cantidad: ${product.quantity}</p>
-          <p class="product-price">${priceTemp}€ x ${
+      emailBodyUser += `<li>${product.attributes.title} - ${
         product.quantity
-      } = ${totalPrice.toFixed(2)}€</p>
-        </div>
-      </li>`;
+      } x ${priceTemp}€ = ${totalPrice.toFixed(2)}€</li>`;
     });
 
-    emailBodyUser += `</ul>
-      <p class="total">Total pagado: ${totalPayment.toFixed(2)}€</p>
-      </body>
-    </html>`;
+    emailBodyUser += `</ul><p>Total pagado: ${totalPayment.toFixed(2)}€</p>`;
 
     // Enviar correo electrónico de confirmación al usuario
     try {
       await strapi.plugins["email"].services.email.send({
-        to: userEmail, // Correo electrónico del usuario logeado
-        from: "victor_pro_@hotmail.com", // Debe coincidir con defaultFrom en config/plugins.js
-        replyTo: "victor_pro_@hotmail.com", // Debe coincidir con defaultReplyTo en config/plugins.js
+        to: "correo-usuario@dominio.com", // Correo electrónico del usuario logeado
+        from: "tu-correo@dominio.com", // Debe coincidir con defaultFrom en config/plugins.js
+        replyTo: "tu-correo@dominio.com", // Debe coincidir con defaultReplyTo en config/plugins.js
         subject: "Confirmación de compra",
         html: emailBodyUser, // Cuerpo del correo electrónico con detalles de la compra para el usuario
       });
@@ -130,64 +59,7 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
     }
 
     // Construir el cuerpo del correo electrónico para el administrador
-    let emailBodyAdmin = `<html>
-      <head>
-        <style>
-          /* Estilos CSS para el correo electrónico */
-          .order {
-            background-color: #f3f3f3;
-            width: 100%;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-          }
-
-          .product {
-            display: flex;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ddd;
-          }
-
-          .product img {
-            width: 100px;
-            margin-right: 15px;
-            border-radius: 8px;
-          }
-
-          .product-details {
-            flex: 1;
-          }
-
-          .product-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-          }
-
-          .product-info {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
-          }
-
-          .product-price {
-            font-weight: bold;
-          }
-
-          .total {
-            text-align: right;
-            font-weight: bold;
-            margin-top: 20px;
-          }
-        </style>
-      </head>
-      <body>
-        <p>Nueva compra realizada por:</p>
-        <p>Nombre: ${name}</p>
-        <p>Usuario: ${username}</p>
-        <p>Email: ${userEmail}</p>
-        <p>Detalles de la compra:</p>
-        <ul>`;
+    let emailBodyAdmin = `<p>Nueva compra realizada por:</p><p>Usuario ID: ${idUser}</p><p>Detalles de la compra:</p><ul>`;
 
     products.forEach((product) => {
       const priceTemp = calcDiscountPrice(
@@ -197,37 +69,20 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
 
       const totalPrice = Number(priceTemp) * product.quantity;
 
-      emailBodyAdmin += `<li class="product">
-        <h1"${product.attributes.title}">
-        <div class="product-details">
-          <p class="product-title">${product.attributes.title}</p>
-          <p class="product-info">${
-            product.attributes.category.data.attributes.title
-          }</p>
-          <p class="product-info">Cantidad: ${product.quantity}</p>
-          <p class="product-price">${priceTemp}€ x ${
+      emailBodyAdmin += `<li>${product.attributes.title} - ${
         product.quantity
-      } = ${totalPrice.toFixed(2)}€</p>
-        </div>
-      </li>`;
+      } x ${priceTemp}€ = ${totalPrice.toFixed(2)}€</li>`;
     });
 
-    emailBodyAdmin += `</ul>
-      <p class="total">Total pagado: ${totalPayment.toFixed(2)}€</p>
-      <p>Dirección: ${addressShipping.attributes.address} ${
-      addressShipping.attributes.state
-    } ${addressShipping.attributes.city} ${
-      addressShipping.attributes.postal_code
-    }</p>
-      </body>
-    </html>`;
+    emailBodyAdmin += `</ul><p>Total pagado: ${totalPayment.toFixed(2)}€</p>`;
+    emailBodyAdmin += `<p>Dirección de envío: ${addressShipping.attributes.address}, ${addressShipping.attributes.state}, ${addressShipping.attributes.city}, ${addressShipping.attributes.postal_code}, ${addressShipping.attributes.title}</p>`;
 
     // Enviar correo electrónico al administrador
     try {
       await strapi.plugins["email"].services.email.send({
-        to: "llinaresvictor7@gmail.com", // Correo electrónico del administrador
-        from: "victor_pro_@hotmail.com", // Debe coincidir con defaultFrom en config/plugins.js
-        replyTo: "victor_pro_@hotmail.com", // Responder al correo electrónico del usuario
+        to: "correo-admin@dominio.com", // Correo electrónico del administrador
+        from: "tu-correo@dominio.com", // Debe coincidir con defaultFrom en config/plugins.js
+        replyTo: "tu-correo@dominio.com", // Responder al correo electrónico del usuario
         subject: "Nueva compra realizada",
         html: emailBodyAdmin, // Cuerpo del correo electrónico con detalles de la compra para el administrador
       });
